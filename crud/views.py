@@ -70,5 +70,8 @@ def get_task(request,_id):
 
 def index(request):
     result = list_task(request)
-    task_list = result.data['data']
+    if result.data.get("data"):
+        task_list = result.data['data']
+    else:
+        task_list = []
     return render(request,'index.html',{"data":task_list})
