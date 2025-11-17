@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <title>Task Form</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            padding: 40px;
+        }
+
+        #task_list li input{
+            width:25% !important;
+        }
+
+
+        #task_list span{
+            width:50px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+
+        .task_response{
+            display:none;
+            width:'100%';
+            justify-content:center;
+            align-items:center
+        }
+        ul li{
+            display:flex;
+            padding-top:10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .container {
+            background: #fff;
+            padding: 20px 30px;
+            max-width: 1200px;
+            margin: auto;
+            border-radius: 8px;
+            
+        }
+        label {
+            font-weight: bold;
+        }
+        input, textarea {
+            padding: 10px;
+            margin-top: 5px;
+            width:100%;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #create_button {
+            background: purple;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            width:100%;
+            text-align: center;
+            justify-content: center;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+    </style>
+    <script>
+        
+        function deletetask(id){
+            const u = document.querySelector(".task_response")
+            fetch(`user/api/delete/${id}`,{method:"DELETE"}).then(response=>{
+                return response.json()
+            }).then(data=>{
+                if(data.status == "Failed"){
+                    u.innerHTML=`${data.message}`
+                    u.style.display="flex"
+                }else{
+                    document.getElementById(id).remove()
+                }
+            })
+            setTimeout(()=>{
+                u.style.display="none"
+            })
+        }
+        function updatetask(id){
+            const task_name = document.getElementById(id+"_name")
+            const task_description = document.getElementById(id+"_description")
+            const status = document.getElementById(id+"_status")
+            const due_date = document.getElementById(id+"_due_date")
+
+            const u = document.querySelector(".task_response")
+            fetch(`user/api/task/${id}`,{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({"task_name":task_name.innerHTML,"task_description":task_description.innerHTML,"status":status.value,"due_date":due_date.value})})
+            .then(response=>{
+                return response.json()
+            })
+            .then(data=>{
+                u.innerHTML=`${data.message}`
+                u.style.display="flex"
+            })
+
+            setTimeout(()=>{
+                u.style.display="none"    
+            },4000)            
+
+        }
+
+        function createtask(e){
+            const u = document.querySelector(".task_response")
+            e.preventDefault();
+            const task_name = document.getElementById("task_name")
+            const task_description = document.getElementById("task_description")
+            const status =  document.getElementById("status")
+            const due_date = document.getElementById("due_date")
+
+            fetch("user/api/task",{
+                method:"POST",
+                headers:{"Content-Type":"application/json"},
+                body:JSON.stringify({"task_name":task_name.value,"task_description":task_description.value,"status":status.value,"due_date":due_date.value})})
+            .then(response=>{
+                return response.json()
+            }).then(data=>{
+                
+                u.innerHTML=`<span>${data.message}</span>`
+                u.style.display="flex"
+                
+                if(data.status == "OK"){
+
+                    const li = document.createElement("li")
+                    const task_name_ = document.createElement("span")
+                    const task_description_ = document.createElement("span")                
+                    const update = document.createElement("button")
+                    const deletes = document.createElement("button")
+                    const selecttag = document.createElement("select")
+
+                    const due_date_ = document.createElement("input")
+                    due_date_.type="date"
+                    selecttag.innerHTML=`
+                         <option value="">Select Status</option>
+            
+                                <option value="pending">Pending</option>
+                                <option value="working">Working</option>
+                                <option value="complete">Complete</option>
+
+                    `
+                    selecttag.value=status.value
+                    due_date_.value = due_date.value 
+
+                    task_name_.contentEditable="true"
+                    task_name_.innerHTML=`${task_name.value}`
+                    task_description_.innerHTML=`${task_description.value}`
+
+                    task_description_.contentEditable="true"
+                    task_name.value = ""
+
+                    task_description.value=""
+
+                    update.class = "btn btn-success"
+                    update.innerHTML="Update"
+
+                    deletes.class  = "btn btn-danger"
+                    deletes.innerHTML="Delete"
+
+                    li.appendChild(task_name_)
+                    li.appendChild(task_description_)                
+                    li.append(due_date_)
+                    li.append(selecttag)                
+                    li.appendChild(update)
+
+                    li.appendChild(deletes)
+                    
+                    document.getElementById("task_list").appendChild(li)
+
+                }
+                
+            })
+            setTimeout(()=>{
+                u.style.display="none"    
+            },4000)
+        }
+
+        
+</script>
+</head>
+<body>
+
+<div class="container">
+    <span class="task_response alert-primary p-2"></span>
+    <h2 style="text-align: center;">Create a Task</h2>
+
+    <form onsubmit="return createtask(event)">
+        <input type="text" id="task_name"  placeholder="Task name" required>
+        <textarea id="task_description"  rows="5" placeholder="Task description" required></textarea>
+        <input type="date" required id="due_date">
+        <select id="status" required class="form-control w-100 mb-2">
+                <option value="">Select Status</option>
+            
+                <option value="pending">Pending</option>
+                <option value="working">Working</option>
+                <option value="complete">Complete</option>
+        </select>
+
+
+
+        <button id="create_button">Create task+</button>
+    </form>
+
+            <ul id="task_list">
+            {% for task in data %}
+            <li id="{{task.id}}">
+
+                <span contenteditable="true" id="{{task.id}}_name">{{task.task_name}}</span>
+                <span contenteditable="true" id="{{task.id}}_description">{{task.task_description}}</span>
+                <input type="date" id="{{task.id}}_due_date" value="{{ task.due_date|date:'Y-m-d' }}">
+                <select id="{{task.id}}_status" class="form-control" style="width:auto;">
+                    <option value="">Select Status</option>
+                    <option value="pending" {% if task.status == "pending" %}selected{% endif %}>Pending</option>
+                    <option value="working" {% if task.status == "working" %}selected{% endif %}>Working</option>
+                    <option value="complete" {% if task.status == "complete" %}selected{% endif %}>Complete</option>
+                </select>
+
+
+                <button class="btn btn-success" onClick="updatetask('{{task.id}}')">Update</button>
+                <button class="btn btn-danger"  onClick="deletetask('{{task.id}}')">Delete</button>
+
+            </li>                
+            {% endfor %}
+        </ul>
+
+
+</div>
+
+</body>
+</html>
